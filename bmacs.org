@@ -187,8 +187,8 @@ This is Bryan Gilbert's personal Emacs configuration.
 ** Personal Information
 
 #+BEGIN_SRC emacs-lisp
-(setq user-full-name "Bryan Gilbert"
-      user-mail-address "bryan@bryan.sh"
+(setq user-full-name "Josh Skidmore"
+      user-mail-address "josh@josh.sc"
       auth-sources (list (expand-file-name "~/.authinfo.gpg")))
 #+END_SRC
 
@@ -197,7 +197,7 @@ This is Bryan Gilbert's personal Emacs configuration.
 *** Font
 
 #+BEGIN_SRC emacs-lisp
-(defvar bmacs-font (font-spec :family "Iosevka" :size 25))
+(defvar bmacs-font (font-spec :family "SFMono" :size 23))
 #+END_SRC
 
 *** Leader Keys
@@ -4597,9 +4597,9 @@ Configuration
             (:flags . 4)
             (:from . 25)
             (:subject))
-          mu4e-bookmarks `(("maildir:/fastmail/INBOX OR maildir:/gmail/INBOX OR maildir:/stream/INBOX" "Inbox" ?i)
-                           ("maildir:/fastmail/Drafts OR maildir:/gmail/[Gmail]/.Drafts OR maildir:/stream/[Gmail]/.Drafts" "Drafts" ?d)
-                           ("flag:unread AND maildir:/fastmail/INBOX OR maildir:/gmail/INBOX OR maildir:/stream/INBOX" "Unread messages" ?u)
+          mu4e-bookmarks `(("maildir:/josh@josh.sc/INBOX OR maildir:/josh@stre.am/INBOX" "Inbox" ?i)
+                           ("maildir:/josh@josh.sc/Drafts OR maildir:/josh@stre.am/[Gmail]--Drafts" "Drafts" ?d)
+                           ("flag:unread AND maildir:/josh@josh.sc/INBOX OR maildir:/josh@stre.am/INBOX" "Unread messages" ?u)
                            ("flag:flagged" "Starred messages" ?s)
                            ("date:today..now" "Today's messages" ?t)
                            ("date:7d..now" "Last 7 days" ?w)
@@ -4639,9 +4639,9 @@ Configuration
           :show-target (lambda (target) "delete")
           :action (lambda (docid msg target)
                     (let ((maildir (mu4e-message-field msg :maildir)))
-                      (cond ((string-prefix-p "/fastmail" maildir)
+                      (cond ((string-prefix-p "/josh@josh.sc" maildir)
                              (mu4e~proc-move docid (mu4e-get-trash-folder msg) "-N"))
-                            ((or (string-prefix-p "/gmail" maildir) (string-prefix-p "/stream" maildir))
+                            ((or (string-prefix-p "/josh@stre.am" maildir) (string-prefix-p "/josh@stre.am" maildir))
                              (shell-command (format "expunge-email-id %s" (mu4e-message-field msg :message-id))))
                             (true (mu4e~proc-remove docid))))))
         mu4e-marks)
@@ -4775,24 +4775,20 @@ Configuration
     "Set the refile folder for MSG."
     (let ((maildir (mu4e-message-field msg :maildir)))
       (cond
-       ((string-prefix-p "/fastmail" maildir)
-        "/fastmail/Archive")
-       ((string-prefix-p "/gmail" maildir)
-        "/gmail/[Gmail]/All Mail")
-       ((string-prefix-p "/stream" maildir)
-        "/stream/[Gmail]/All Mail")
+       ((string-prefix-p "/josh@josh.sc" maildir)
+        "/josh@josh.sc/Archive")
+       ((string-prefix-p "/josh@stre.am" maildir)
+        "/josh@stre.am/[Gmail]--All Mail")
        (t nil))))
 
   (defun bmail-trash-folder-function (msg)
     "Set the trash folder for MSG."
     (let ((maildir (mu4e-message-field msg :maildir)))
       (cond
-       ((string-prefix-p "/fastmail" maildir)
-        "/fastmail/Trash")
-       ((string-prefix-p "/gmail" maildir)
-        "/gmail/[Gmail]/.Trash")
-       ((string-prefix-p "/stream" maildir)
-        "/stream/[Gmail]/.Trash")
+       ((string-prefix-p "/josh@josh.sc" maildir)
+        "/josh@josh.sc/Trash")
+       ((string-prefix-p "/josh@stre.am" maildir)
+        "/josh@stre.am/[Gmail]--Trash")
        (t nil))))
 
   (defun email-signature (address)
@@ -4806,48 +4802,35 @@ Configuration
           smtpmail-stream-type 'ssl
           smtpmail-default-smtp-server "smtp.fastmail.com"
           smtpmail-smtp-server "smtp.fastmail.com"
-          smtpmail-smtp-user "gilbertw1@fastmail.com"
+          smtpmail-smtp-user "josh@josh.sc"
           smtpmail-smtp-service 465)
 
     (setq mu4e-contexts
         `(,(make-mu4e-context
-            :name "fastmail"
+            :name "josh@josh.sc"
             :match-func (lambda (msg) (when msg
-                                   (string-prefix-p "/fastmail" (mu4e-message-field msg :maildir))))
-            :vars '((mu4e-sent-folder          . "/fastmail/Sent")
-                    (mu4e-drafts-folder        . "/fastmail/Drafts")
-                    (smtpmail-smtp-user        . "gilbertw1@fastmail.com")
+                                   (string-prefix-p "/josh@josh.sc" (mu4e-message-field msg :maildir))))
+            :vars '((mu4e-sent-folder          . "/josh@josh.sc/Sent")
+                    (mu4e-drafts-folder        . "/josh@josh.sc/Drafts")
+                    (smtpmail-smtp-user        . "josh@josh.sc")
                     (smtpmail-smtp-server      . "smtp.fastmail.com")
                     (smtpmail-stream-type      . ssl)
                     (smtpmail-smtp-service     . 465)
-                    (user-mail-address         . "bryan@bryan.sh")
-                    (user-full-name            . "Bryan Gilbert")
-                    (mu4e-compose-signature    . (email-signature "bryan@bryan.sh"))))
+                    (user-mail-address         . "josh@josh.sc")
+                    (user-full-name            . "Josh Skidmore")
+                    (mu4e-compose-signature    . (email-signature "josh@josh.sc"))))
           ,(make-mu4e-context
-            :name "gmail"
+            :name "josh@stre.am"
             :match-func (lambda (msg) (when msg
-                                   (string-prefix-p "/gmail" (mu4e-message-field msg :maildir))))
-            :vars '((mu4e-sent-folder          . "/gmail/[Gmail]/.Sent Mail")
-                    (mu4e-drafts-folder        . "/gmail/[Gmail]/.Drafts")
-                    (smtpmail-smtp-user        . "gilbertw1@gmail.com")
+                                   (string-prefix-p "/josh@stre.am" (mu4e-message-field msg :maildir))))
+            :vars '((mu4e-sent-folder          . "/stream/[Gmail]--Sent Mail")
+                    (mu4e-drafts-folder        . "/stream/[Gmail]--Drafts")
+                    (smtpmail-smtp-user        . "josh.am")
                     (smtpmail-smtp-server      . "smtp.gmail.com")
                     (smtpmail-stream-type      . starttls)
                     (smtpmail-smtp-service     . 587)
-                    (user-mail-address         . "gilbertw1@gmail.com")
-                    (user-full-name            . "Bryan Gilbert")
-                    (mu4e-compose-signature    . (email-signature "gilbertw1@gmail.com"))))
-          ,(make-mu4e-context
-            :name "stream"
-            :match-func (lambda (msg) (when msg
-                                   (string-prefix-p "/stream" (mu4e-message-field msg :maildir))))
-            :vars '((mu4e-sent-folder          . "/stream/[Gmail]/.Sent Mail")
-                    (mu4e-drafts-folder        . "/stream/[Gmail]/.Drafts")
-                    (smtpmail-smtp-user        . "bryan@stre.am")
-                    (smtpmail-smtp-server      . "smtp.gmail.com")
-                    (smtpmail-stream-type      . starttls)
-                    (smtpmail-smtp-service     . 587)
-                    (user-mail-address         . "bryan@stream.live")
-                    (user-full-name            . "Bryan Gilbert")
+                    (user-mail-address         . "josh@stre.am")
+                    (user-full-name            . "Josh Skidmore")
                     (mu4e-compose-signature    . (email-signature "bryan@stream.live")))))))
 
 #+END_SRC
@@ -7801,7 +7784,7 @@ Open url links in qutebrowser
 #+BEGIN_SRC emacs-lisp
 (defun gilbertw1/browse-url (url &optional ignored)
   (interactive (browse-url-interactive-arg "URL: "))
-  (call-process "/home/gilbertw1/bin/open-qutebrowser" nil 0 nil url))
+  (call-process "/home/skidmore/bin/open-qutebrowser" nil 0 nil url))
 (setq browse-url-browser-function #'gilbertw1/browse-url)
 
 (defun gilbertw1/browse-url-new-window (url &optional ignored)
@@ -7866,6 +7849,9 @@ Set the various indentations
  '(org-level-3              ((t :foreground "#a9a1e1" :inherit nil :height 1.1)))
  '(org-level-4              ((t :foreground "#ECBE7B" :inherit nil :height 1.1)))
  '(org-level-5              ((t :foreground "#46D9FF" :inherit nil :height 1.1))))
+
+(custom-set-faces
+  '(default                 ((t (:background "#000000")))))
 #+END_SRC
 
 *** Mardown Open Comamnd
