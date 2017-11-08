@@ -4643,7 +4643,7 @@ Configuration
                       (cond ((string-prefix-p "/josh@josh.sc" maildir)
                              (mu4e~proc-move docid (mu4e-get-trash-folder msg) "-N"))
                             ((or (string-prefix-p "/josh@stre.am" maildir) (string-prefix-p "/josh@stre.am" maildir))
-                             (shell-command (format "expunge-email-id %s" (mu4e-message-field msg :message-id))))
+                             (shell-command (format "mu-expunge-email-id.sh %s" (mu4e-message-field msg :message-id))))
                             (true (mu4e~proc-remove docid))))))
         mu4e-marks)
 
@@ -7206,8 +7206,8 @@ session)."
  "M-x"    #'execute-extended-command
  "M-;"    #'eval-expression
  ;; Tools
- "C-`"    #'bmacs/show-hide-popup-buffer
- "C-~"    (λ! (bmacs/show-hide-popup-buffer t))
+ "C-\\"    #'bmacs/show-hide-popup-buffer
+ "C-l"    (λ! (bmacs/show-hide-popup-buffer t))
  ;; Text-scaling
  "M-0"    (λ! (text-scale-set 0))
  "M-="    #'text-scale-increase
