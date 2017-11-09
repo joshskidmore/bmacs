@@ -2317,14 +2317,14 @@ repository root."
 *** magithub
 
 #+BEGIN_SRC emacs-lisp
-(use-package magithub
-  :ensure t
-  :after magit
-  :init
-  (setq magithub-dir (concat bmacs-cache-dir "magithub"))
-  :config
-  (magithub-feature-autoinject t)
-  (load "magithub-issue-view.el"))
+;(use-package magithub
+;  :ensure t
+;  :after magit
+;  :init
+;  (setq magithub-dir (concat bmacs-cache-dir "magithub"))
+;  :config
+;  (magithub-feature-autoinject t)
+;  (load "magithub-issue-view.el"))
 #+END_SRC
 
 ** UI
@@ -4846,10 +4846,10 @@ Configuration
                  (mapcar #'cdr (ace-link--mu4e-collect))
                  (avy--style-fn avy-style)))))
       (ace-link--mu4e-action pt)))
-  
+
   (declare-function shr-browse-url "shr")
   (declare-function mu4e~view-browse-url-from-binding "ext:mu4e-view")
-  
+
   (defun ace-link--mu4e-action (pt)
     (when (number-or-marker-p pt)
       (goto-char (1+ pt))
@@ -4857,7 +4857,7 @@ Configuration
              (shr-browse-url))
             ((get-text-property (point) 'mu4e-url)
              (mu4e~view-browse-url-from-binding)))))
-  
+
   (defun ace-link--mu4e-next-link (pos)
     (let ((shr-link-pos (text-property-not-all pos (point-max) 'shr-url nil))
           (mu4e-link-pos (text-property-not-all pos (point-max) 'mu4e-url nil)))
@@ -4868,11 +4868,11 @@ Configuration
             (shr-link-pos (list 'shr-url shr-link-pos))
             (mu4e-link-pos (list 'mu4e-url mu4e-link-pos))
             (t nil))))
-  
+
   (defun ace-link--mu4e-end-of-link (link)
     (or (text-property-any (elt link 1) (point-max) (elt link 0) nil)
         (point-max)))
-  
+
   (defun ace-link--mu4e-collect ()
     "Collect the positions of visible links in the current mu4e buffer."
     (save-excursion
