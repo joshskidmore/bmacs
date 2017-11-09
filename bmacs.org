@@ -58,6 +58,7 @@
     - [[#persp-mode][persp-mode]]
     - [[#eyebrowse-][eyebrowse ?]]
   - [[#editing][Editing]]
+    - [[#evil-1][Evil]]
     - [[#editorconfig][Editorconfig?]]
     - [[#hideshow][hideshow]]
     - [[#undo-tree][undo-tree]]
@@ -178,7 +179,7 @@
     - [[#adjust-fringe][Adjust Fringe]]
     - [[#update-faces][Update Faces]]
     - [[#mardown-open-comamnd][Mardown Open Comamnd]]
-  - [[#todos-03][Todos]]
+  - [[#todos-02][Todos]]
 
 ** About this file
 
@@ -1744,6 +1745,15 @@ Generic code auto completion
     (nconc company-backends '(company-yasnippet)))
 
   (global-company-mode +1))
+
+(defun +company/complete ()
+  "Bring up the completion popup. If only one result, complete it."
+  (interactive)
+  (require 'company)
+  (when (and (company-manual-begin)
+             (= company-candidates-length 1))
+    (company-complete-common)))
+
 #+END_SRC
 
 *** comany-statistics
@@ -1845,6 +1855,8 @@ Allows for creation of isolated workspaces
 *** TODO eyebrowse ?
 
 ** Editing
+
+*** Evil
 
 **** evil-commentary
 Robust commenting support in evil-mode
@@ -4931,8 +4943,7 @@ Configuration
 (use-package company-restclient
   :after restclient
   :config
-  (add-hook 'restclient-mode #'(lambda ()
-                                 (setq-local company-backends '(restclient-mode company-restclient)))))
+  (add-hook! restclient-mode (setq-local company-backends (cons 'company-restclient company-backends))))
 #+END_SRC
 
 *** Dash Docs
@@ -5912,6 +5923,11 @@ Gross
 (use-package tern
   :commands tern-mode
   :init (add-hook 'js2-mode-hook #'tern-mode))
+
+(use-package company-tern
+  :after tern
+  :config
+  (add-hook! js2-mode (setq-local company-backends '(company-tern))))
 
 (use-package rjsx-mode
   :commands rjsx-mode
@@ -7861,7 +7877,7 @@ Set the various indentations
 #+END_SRC
 
 
-** Todos [0/3]
+** Todos [0/2]
 
 - [ ] Fix evil-mc incorrect cursor position
       When using 'C-S-j' sometimes the cursor jumps around
@@ -7869,5 +7885,3 @@ Set the various indentations
 - [ ] Implement 'surround-type' like surround function for generic types
 Uses correct syntax for known languages (maybe only implemented for those langs)
 eg. Highlight 'User' -> Press 'st' -> Type 'Seq' -> Result: Seq[User]
-
-- [ ] In command buffer map C-p/n to previous next command
