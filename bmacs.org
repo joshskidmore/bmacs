@@ -16,12 +16,12 @@
     - [[#leader-keys][Leader Keys]]
     - [[#directories][Directories]]
     - [[#hooks][Hooks]]
+    - [[#large-file-handling][Large File Handling]]
     - [[#misc][Misc]]
   - [[#security-settings][Security Settings]]
   - [[#emacs-initialization][Emacs Initialization]]
     - [[#initialization-settings][Initialization Settings]]
     - [[#initialize-and-add-package-sources][Initialize and Add Package Sources]]
-    - [[#setup-auto-compilation][Setup auto compilation]]
     - [[#setup-quelpa][Setup Quelpa]]
   - [[#doom-macros][DOOM! Macros]]
     - [[#after][after!]]
@@ -106,7 +106,6 @@
     - [[#ace-link][ace-link]]
     - [[#ace-window][ace-window]]
     - [[#avy][avy]]
-    - [[#smart-forward][smart-forward]]
     - [[#wgrep][wgrep]]
     - [[#dumb-jump][dumb-jump]]
   - [[#org-mode][Org Mode]]
@@ -167,6 +166,7 @@
   - [[#functions][Functions]]
     - [[#file-functions][File Functions]]
     - [[#buffer-functions][Buffer Functions]]
+    - [[#window-functions][Window Functions]]
     - [[#counsel-project-bookmarks][Counsel Project Bookmarks]]
     - [[#random-functions][Random Functions]]
   - [[#keybindings][Keybindings]]
@@ -177,6 +177,7 @@
     - [[#adjust-fringe][Adjust Fringe]]
     - [[#update-faces][Update Faces]]
     - [[#mardown-open-comamnd][Mardown Open Comamnd]]
+    - [[#fix-org-popups][Fix Org Popups]]
   - [[#todos-02][Todos]]
 
 ** About this file
@@ -259,6 +260,20 @@ different types of files.
 (defvar bmacs-post-init-hook nil
   "A list of hooks run after BMACS initialization is complete, and after
 `bmacs-init-hook'.")
+#+END_SRC
+
+*** Large File Handling
+
+#+BEGIN_SRC emacs-lisp
+(defvar bmacs-large-file-size 1
+  "Size (in MB) above which the user will be prompted to open the file literally
+to avoid performance issues. Opening literally means that no major or minor
+modes are active and the buffer is read-only.")
+
+(defvar bmacs-large-file-modes-list
+  '(archive-mode tar-mode jka-compr git-commit-mode image-mode
+    doc-view-mode doc-view-mode-maybe ebrowse-tree-mode pdf-view-mode)
+  "Major modes that `bmacs/check-large-file' will ignore.")
 #+END_SRC
 
 *** Misc
@@ -388,39 +403,29 @@ Add the package directory =mu4e= to the load path.
     (add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e"))
 #+END_SRC
 
-*** Setup auto compilation
-
-Auto compile any non-compiled lisp file before it is loaded.
-
-#+BEGIN_SRC emacs-lisp
-(use-package auto-compile
-  :demand t
-  :config (auto-compile-on-load-mode))
-#+END_SRC
-
-
 *** Setup Quelpa
 
 Not currently using quelpa, so not enabled.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 
-  ;; (setq quelpa-checkout-melpa-p nil
-  ;;       quelpa-update-melpa-p nil
-  ;;       quelpa-melpa-recipe-stores nil
-  ;;       quelpa-self-upgrade-p nil
-  ;;       quelpa-dir (expand-file-name "quelpa" bmacs-packages-dir))
+  (setq quelpa-checkout-melpa-p nil
+        quelpa-update-melpa-p nil
+        quelpa-melpa-recipe-stores nil
+        quelpa-self-upgrade-p nil
+        quelpa-dir (expand-file-name "quelpa" bmacs-packages-dir)
+        quelpa-update-melpa-p nil)
 
-  ;; (setq quelpa-update-melpa-p nil)
-  ;; (unless (require 'quelpa nil t)
-  ;;   (with-temp-buffer
-  ;;     (url-insert-file-contents "http://raw.github.com/quelpa/quelpa/master/bootstrap.el")
-  ;;     (eval-buffer))
-  ;;   (quelpa
-  ;;  '(quelpa-use-package
-  ;;    :fetcher github
-  ;;    :repo "quelpa/quelpa-use-package")))
-  ;; (require 'quelpa-use-package)
+  (eval-when-compile
+    (unless (require 'quelpa nil t)
+      (with-temp-buffer
+        (url-insert-file-contents "http://raw.github.com/quelpa/quelpa/master/bootstrap.el")
+        (eval-buffer))
+      (quelpa
+     '(quelpa-use-package
+       :fetcher github
+       :repo "quelpa/quelpa-use-package")))
+    (require 'quelpa-use-package))
 #+END_SRC
 
 ** DOOM! Macros
@@ -1051,6 +1056,25 @@ Enable line numbers
 (show-paren-mode)
 
 (push '("/LICENSE$" . text-mode) auto-mode-alist)
+
+
+(defun bmacs/check-large-file ()
+  "Check if the buffer's file is large (see `bmacs-large-file-size'). If so, ask
+for confirmation to open it literally (read-only, disabled undo and in
+fundamental-mode) for performance sake."
+  (let* ((filename (buffer-file-name))
+         (size (nth 7 (file-attributes filename))))
+    (when (and (not (memq major-mode bmacs-large-file-modes-list))
+               size (> size (* 1024 1024 bmacs-large-file-size))
+               (y-or-n-p
+                (format (concat "%s is a large file, open literally to "
+                                "avoid performance issues?")
+                        (file-relative-name filename))))
+      (setq buffer-read-only t)
+      (buffer-disable-undo)
+      (fundamental-mode))))
+
+(add-hook 'find-file-hook #'bmacs/check-large-file)
 #+END_SRC
 
 **** TODO Break apart?
@@ -2013,8 +2037,8 @@ Multiple cursors!
                    (evil-delete-char-without-register . ((:default . evil-mc-execute-default-evil-delete)))
                    (evil-delete-backward-char-without-register . ((:default . evil-mc-execute-default-evil-delete)))
                    (evil-delete-line-without-register . ((:default . evil-mc-execute-default-evil-delete)))
-                   (evil-paste-after-witout-register . ((:default . evil-mc-execute-default-evil-paste)))
-                   (evil-paste-before-witout-register . ((:default . evil-mc-execute-default-evil-paste)))))
+                   (evil-paste-after-without-register . ((:default . evil-mc-execute-default-evil-paste)))
+                   (evil-paste-before-without-register . ((:default . evil-mc-execute-default-evil-paste)))))
       (push commands evil-mc-custom-known-commands))
 
     ;; disable evil-escape in evil-mc; causes unwanted text on invocation
@@ -3819,8 +3843,6 @@ Quickly jump to things
         avy-timeout-seconds 0.3))
 #+END_SRC
 
-*** TODO smart-forward
-
 *** wgrep
 Edit grep buffer and save changes
 
@@ -3872,21 +3894,13 @@ Jump to any definition ... the dumb way!
 **** TODO Pull over the jump/search online stuff
 
 ** Org Mode
-It's org-mode ya'll -- TODO: make sure elpa is loaded instead of built in
+It's org-mode ya'll
 
 *** Org
 
-Functions
+**** Functions
 
 #+BEGIN_SRC emacs-lisp
-
- (use-package org)
-
-  ;; Ensure ELPA org is prioritized above built-in org.
-  (when-let ((path (locate-library "org" nil load-path)))
-    (setq load-path (delete path load-path))
-    (push (file-name-directory path) load-path))
-
   (defun +borg/open-organizer ()
     "Open the default organizer"
     (interactive)
@@ -4112,11 +4126,26 @@ Functions
     "Toggle the presence of a checkbox in the current item."
     (interactive)
     (org-toggle-checkbox '(4)))
+
+  (defun +borg/org-file-is-large-p ()
+    (let* ((filename (buffer-file-name))
+           (size (nth 7 (file-attributes filename))))
+      (> (* 1024 size) +borg-large-file-size)))
+
+  (defun +borg/org-load-hook (func &optional append)
+    (if (featurep 'org)
+      (add-hook 'bmacs-post-init-hook func append)
+     (add-hook 'org-load-hook func append)))
 #+END_SRC
 
-Configuration
+**** Configuration
 
 #+BEGIN_SRC emacs-lisp
+  ;; Ensure ELPA org is prioritized above built-in org.
+  (when-let ((path (locate-library "org" nil load-path)))
+    (setq load-path (delete path load-path))
+    (push (file-name-directory path) load-path))
+
 ;; Custom variables
 (defvar +borg-dir (expand-file-name "~/org/")
   "The directory where org files are kept.")
@@ -4124,6 +4153,10 @@ Configuration
 
 (defvar +borg-organizer (concat +borg-dir "organizer.org")
   "The default organizer.")
+
+(defvar +borg-large-file-size 500
+  "The size threshold past which an org file is considered large in kb. If an org
+  file exceeds this size some optimizations will be applied")
 
 (use-package toc-org
   :commands toc-org-enable
@@ -4142,8 +4175,8 @@ Configuration
   (add-hook 'evil-insert-state-exit-hook #'+borg|update-cookies nil t)
   (+org-evil-mode +1)
 
-  ;; TODO Add filesize checks (possibly too expensive in big org files)
-  (add-hook 'before-save-hook #'+borg|update-cookies nil t)
+  (unless (+borg/org-file-is-large-p)
+    (add-hook 'before-save-hook #'+borg|update-cookies nil t))
 
   ;;
   (setq line-spacing 1)
@@ -4153,20 +4186,7 @@ Configuration
   (setq-local company-idle-delay nil)
 
   ;; show-paren-mode causes problems for org-indent-mode, so disable it
-  (set (make-local-variable 'show-paren-mode) nil)
-
-  (unless org-agenda-inhibit-startup
-    ;; My version of the 'overview' #+STARTUP option: expand first-level
-    ;; headings. Expands the first level, but no further.
-    (when (eq org-startup-folded t)
-      (outline-hide-sublevels 2))
-
-    ;; If saveplace places the point in a folded position, unfold it on load
-    (when (outline-invisible-p)
-      (ignore-errors
-        (save-excursion
-          (outline-previous-visible-heading 1)
-          (org-show-subtree))))))
+  (set (make-local-variable 'show-paren-mode) nil))
 
 (defun +borg|init ()
   "Run once, when org is first loaded."
@@ -4347,15 +4367,21 @@ between the two."
       t))
   (add-hook '+evil-esc-hook #'+borg|remove-occur-highlights))
 
-(+borg|init)
-;(add-hook 'org-load-hook #'+borg|init)
+(+borg/org-load-hook #'+borg|init)
 (add-hook 'org-mode-hook #'+borg|hook)
 #+END_SRC
 
 *** Babel
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'org-load-hook #'+org-babel|init t)
+(use-package ob-restclient
+  :defer t)
+(use-package ob-rust
+  :defer t)
+(use-package ob-sql-mode
+  :defer t)
+(use-package ob-translate
+  :defer t)
 
 (defun +org-babel|init ()
   (setq org-src-fontify-natively t      ; make code pretty
@@ -4405,12 +4431,14 @@ between the two."
     (when header-line-format
       (setq header-line-format nil)))
   (add-hook 'org-src-mode-hook #'+org|src-mode-remove-header))
+
+(+borg/org-load-hook #'+org-babel|init t)
 #+END_SRC
 
 *** Capture
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'org-load-hook #'+org-capture|init t)
+(+borg/org-load-hook #'+org-capture|init t)
 
 (defun +org-capture|init ()
   "Set up a sane `org-capture' workflow."
@@ -4447,6 +4475,7 @@ between the two."
     (when (equal "org-capture" (frame-parameter nil 'name))
       (delete-frame)))
   (add-hook 'org-capture-after-finalize-hook #'+org-capture|finalize))
+
 #+END_SRC
 
 *** Present
@@ -4541,14 +4570,14 @@ between the two."
 (defvar +org-present-text-scale 7
   "The `text-scale-amount' for `org-tree-slide-mode'.")
 
-(add-hook 'org-load-hook #'+org-present|init t)
-
+(+borg/org-load-hook #'+org-present|init t)
 
 ;;
 ;; Plugins
 ;;
 
 (use-package ox-reveal
+  :defer t
   :config
   (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"
         org-reveal-mathjax t))
@@ -4597,7 +4626,6 @@ between the two."
   (map! :map org-mode-map
         "<f8>" #'+org-present/org-tree-slides
         "<f7>" #'+org-present/next))
-
 #+END_SRC
 
 ** Email
@@ -6699,13 +6727,16 @@ Improved help commands
 *** TODO pcre2el
 
 ** Popup Rules
+:LOGBOOK:
+CLOCK: [2017-11-15 Wed 13:17]
+:END:
 
 Let's define a simple function that allows us to easily make any buffer into a popup based on a
 regular expression. This function adds an entry to the `display-buffer-alist` to define constraints
 about how the buffer should be displayed. These constraints define a simple popup behavior.
 
 #+BEGIN_SRC emacs-lisp
-(cl-defun bmacs/make-popup (buffer-rx)
+(cl-defun bmacs/make-popup (buffer-rx &optional (height 0.4))
     (add-to-list 'bmacs-popups buffer-rx)
     (add-to-list 'display-buffer-alist
                  `(,buffer-rx
@@ -6713,7 +6744,7 @@ about how the buffer should be displayed. These constraints define a simple popu
                     display-buffer-in-side-window)
                    (reusable-frames . visible)
                    (side            . bottom)
-                   (window-height   . 0.4))))
+                   (window-height   . ,height))))
 #+END_SRC
 
 Now we're going to create a set of rules based on the buffers we would like to become popups.
@@ -6737,6 +6768,21 @@ Now we're going to create a set of rules based on the buffers we would like to b
 (bmacs/make-popup (rx bos "*Flycheck errors*" eos))
 ;; VC Diff
 (bmacs/make-popup (rx bos "*vc-diff*" eos))
+;; Org Popups
+(bmacs/make-popup (rx bos "*Calendar*" eos))
+(bmacs/make-popup (rx bos "*Org todo*" eos) 0.05)
+(bmacs/make-popup (rx bos "*Org Note*" eos) 0.1)
+(bmacs/make-popup (rx bos "*Org Select*" eos) 0.2)
+(bmacs/make-popup (rx bos "*Org Links*" eos) 0.05)
+(bmacs/make-popup (rx bos "*Org Export Dispatcher*" eos) 0.05)
+(bmacs/make-popup (rx bos "*Org Commands*" eos) 0.05)
+(bmacs/make-popup (rx bos "*Org Agenda") 0.2)
+(bmacs/make-popup (rx bos "*Agenda Commands*" eos) 0.2)
+(bmacs/make-popup (rx bos "*Org Clock*" eos))
+(bmacs/make-popup (rx bos "*Org Src"))
+(bmacs/make-popup (rx bos "*Edit Formulas*" eos) 0.01)
+(bmacs/make-popup (rx bos "*Org-Babel") 0.25)
+(bmacs/make-popup (rx bos "CAPTURE") 0.2)
 #+END_SRC
 
 
@@ -6786,7 +6832,7 @@ _j_ ↓        	_-_ horizontal	_f_ind files	_J_ X↓
 _k_ ↑        	_z_ undo      	_a_ce 1				_K_ X↑
 _l_ →        	_Z_ reset      	_s_wap				_L_ X→
 _F_ollow		  _D_lt Other   	_S_ave				_m_aximize
-_SPC_ cancel	_o_nly this   	_d_elete			_=_ Balance	
+_SPC_ cancel	_o_nly this   	_d_elete			_=_ Balance
 "
    ("h" windmove-left )
    ("j" windmove-down )
@@ -6832,7 +6878,7 @@ _SPC_ cancel	_o_nly this   	_d_elete			_=_ Balance
           (setq this-command 'winner-undo)))
    ("Z" winner-redo)
    ("SPC" nil))
-    
+
 #+END_SRC
 
 *** Smerge
@@ -7162,6 +7208,20 @@ project."
                  :caller 'bmacs/show-hide-popup-buffer)))))
 #+END_SRC
 
+*** Window Functions
+
+#+BEGIN_SRC emacs-lisp
+(defun bmacs/window-zoom ()
+  "Maximize and isolate the current buffer. Activate again to undo this. If the
+window changes before then, the undo expires."
+  (interactive)
+  (if (and (one-window-p)
+           (assoc ?_ register-alist))
+      (jump-to-register ?_)
+    (window-configuration-to-register ?_)
+    (delete-other-windows)))
+#+END_SRC
+
 *** Counsel Project Bookmarks
 
 #+BEGIN_SRC emacs-lisp
@@ -7400,7 +7460,7 @@ session)."
       :desc "Winner redo"                  :nv "U" #'winner-redo
       :desc "Ace window"                   :nv "W" #'ace-window
       :desc "Manage Windows"               :nv "w" #'bmacs-hydra-window/body
-      :desc "Toggle maximize window"       :nv "m" #'doom/window-zoom)
+      :desc "Toggle maximize window"       :nv "m" #'bmacs/window-zoom)
 
     (:desc "jump"
       :prefix "j"
@@ -7417,7 +7477,8 @@ session)."
       :desc "Git status"                   :nv "s" #'magit-status
       :desc "Git blame"                    :nv "b" #'magit-blame
       :desc "Git time machine"             :nv "t" #'git-timemachine
-      :desc "Git log file"                 :nv "l" #'magit-log-buffer-file
+      :desc "Git log current file"         :nv "f" #'magit-log-buffer-file
+      :desc "Git log all"                  :nv "l" #'magit-log-all
       :desc "Smerge Hydra"                 :nv "m" #'bmacs-hydra-smerge/body
       :desc "Show and copy git link"       :nv "y" #'git-link
       :desc "Open git link"                :nv "o" #'bmacs/git-browse
@@ -7921,6 +7982,14 @@ Set the various indentations
 (setq markdown-open-command "typora")
 #+END_SRC
 
+
+*** Fix Org Popups
+
+#+BEGIN_SRC emacs-lisp
+(after! org
+  (defun org-switch-to-buffer-other-window (&rest args)
+    (apply #'switch-to-buffer-other-window args)))
+#+END_SRC
 
 ** Todos [0/2]
 
