@@ -7512,7 +7512,7 @@ session)."
      :desc "Indent guides (column)"        :nv "I" #'highlight-indentation-current-column-mode
      :desc "Evil goggles"                  :nv "g" #'+evil-goggles/toggle
      :desc "Visual line wrapping"          :nv "v" #'visual-line-mode
-     :desc "Whitespace mode"               :nv "w" #'gdoom/toggle-whitespace)
+     :desc "Whitespace mode"               :nv "w" #'bmacs/toggle-whitespace)
 
    (:desc "text"
      :prefix "t"
