@@ -1,3 +1,11 @@
+;;; Package --- Summary
+
+;;; Commentary:
+;; The main entry point into BMACS. It either loads the pre-compiled BMACS configuration file
+;; or tangles and loades the BMACS literate org configuration file.
+
+;;; Code:
+
 ;; Let's start emacs up quietly.
 (advice-add #'display-startup-echo-area-message :override #'ignore)
 (setq inhibit-startup-message t
@@ -9,11 +17,13 @@
 
 
 (let ((file-name-handler-alist nil))
-  (if (file-exists-p "~/.emacs.d/bmacs.elc")
-      (load-file "~/.emacs.d/bmacs.elc")
-    (progn
-      (require 'org)
-      (org-babel-load-file "~/.emacs.d/bmacs.org"))))
+  (if (file-exists-p (expand-file-name "bmacs.elc" user-emacs-directory))
+      (load-file (expand-file-name "bmacs.elc" user-emacs-directory))
+    (require 'org)
+    (org-babel-load-file (expand-file-name "bmacs.org" user-emacs-directory))))
+
+
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -53,3 +63,4 @@
  '(org-level-5 ((t :foreground "#46D9FF" :inherit nil :height 1.1)))
  '(smerge-refined-added ((t (:inherit (quote smerge-other)))))
  '(smerge-refined-removed ((t (:inherit (quote smerge-mine))))))
+;;; init.el ends here
