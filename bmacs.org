@@ -2305,7 +2305,7 @@ Check syntax!
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit
-  :commands (magit-status magit-blame magit-log-buffer-file)
+  :commands (magit-status magit-blame magit-log-buffer-file magit-file-popup magit-log-all)
   :config
   (map! :map magit-mode-map
         "SPC" nil))
@@ -4222,6 +4222,7 @@ It's org-mode ya'll
   (org-indent-mode +1)
   (bmacs|disable-line-numbers)
   (setq-local company-idle-delay nil)
+  (undo-tree-mode +1)
 
   ;; show-paren-mode causes problems for org-indent-mode, so disable it
   (set (make-local-variable 'show-paren-mode) nil))
@@ -4310,10 +4311,10 @@ between the two."
           :nv "j"   #'evil-next-visual-line
           :nv "k"   #'evil-previous-visual-line
 
-          :ni [M-return]   (lambda () (+borg/insert-item 'below))
-          :ni [S-M-return] (lambda () (+borg/insert-item 'above))
-          :ni [C-return]   (lambda () (+borg/insert-item 'below))
-          :ni [S-C-return] (lambda () (+borg/insert-item 'above))
+          :ni [M-return]   (λ! (+borg/insert-item 'below))
+          :ni [S-M-return] (λ! (+borg/insert-item 'above))
+          :ni [C-return]   (λ! (+borg/insert-item 'below))
+          :ni [S-C-return] (λ! (+borg/insert-item 'above))
 
           :ni "M-SPC" #'org-cycle
 
@@ -5006,9 +5007,8 @@ Quick and awesome documentation lookup
 
 #+BEGIN_SRC emacs-lisp
 (use-package counsel-dash
-  :after counsel
-  :config
-  (setq counsel-dash-docsets-path (concat bmacs-etc-dir "docsets"))
+  :commands (counsel-dash counsel-dash-install-docset)
+  :init
   ;; Language Hooks
   (add-hook 'emacs-lisp-mode-hook (lambda () (setq-local counsel-dash-docsets '("Emacs Lisp"))))
   (add-hook 'scala-mode-hook (lambda () (setq-local counsel-dash-docsets '("Scala" "Akka" "Play_Scala" "Java"))))
@@ -6821,6 +6821,8 @@ Now we're going to create a set of rules based on the buffers we would like to b
 (bmacs/make-popup (rx bos "*Edit Formulas*" eos) 0.01)
 (bmacs/make-popup (rx bos "*Org-Babel") 0.25)
 (bmacs/make-popup (rx bos "CAPTURE") 0.2)
+;; Scratch Buffer
+(bmacs/make-popup (rx bos "*scratch*" eos) 0.4)
 #+END_SRC
 
 
@@ -7251,6 +7253,25 @@ project."
   (if (and (boundp 'whitespace-mode) whitespace-mode)
       (whitespace-mode -1)
     (whitespace-mode +1)))
+
+(defun bmacs/scratch-buffer ()
+  (interactive)
+  (let ((text (and (region-active-p)
+                   (buffer-substring-no-properties
+                    (region-beginning) (region-end))))
+        (mode major-mode)
+        (derived-p (derived-mode-p 'prog-mode 'text-mode))
+        (scratch-buffer (get-buffer-create "*scratch*")))
+    (with-current-buffer scratch-buffer
+      (when (and (not (eq major-mode mode))
+                 derived-p
+                 (functionp mode))
+        (funcall mode))
+      (when text
+          (end-of-buffer)
+          (newline)
+          (insert text)))
+    (pop-to-buffer "*scratch*")))
 #+END_SRC
 
 *** Window Functions
@@ -7447,7 +7468,7 @@ session)."
       :desc "Kill other buffers"             :nv "D" (λ! (bmacs/kill-other-buffers t))
       :desc "Kill a buffer"                  :nv "k" #'kill-buffer
       :desc "New empty buffer"               :nv "n" #'evil-buffer-new
-      ;; :desc "Scratch buffer"                 :nv "s" #'doom/open-scratch-buffer TODO
+      :desc "Scratch buffer"                 :nv "s" #'bmacs/scratch-buffer
       ;; TODO spacemacs/copy-whole-buffer-to-clipboard y
       ;; TODO spacemacs/paste-whole-file-to-clipboard p
       )
@@ -7522,7 +7543,7 @@ session)."
       :desc "Git status"                   :nv "s" #'magit-status
       :desc "Git blame"                    :nv "b" #'magit-blame
       :desc "Git time machine"             :nv "t" #'git-timemachine
-      :desc "Git log current file"         :nv "f" #'magit-log-buffer-file
+      :desc "Git log current file"         :nv "f" #'magit-file-popup
       :desc "Git log all"                  :nv "l" #'magit-log-all
       :desc "Smerge Hydra"                 :nv "m" #'bmacs-hydra-smerge/body
       :desc "Show and copy git link"       :nv "y" #'git-link
