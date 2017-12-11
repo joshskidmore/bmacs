@@ -892,7 +892,7 @@ Only display error level warnings immediately to the user
 (use-package async :demand t)
 (use-package s :demand t)
 (use-package f :demand t)
-(use-package subr-x :demand t :ensure nil)
+(use-package subr-x :demand t) ;:ensure nil)
 (require 'cl-lib)
 
 #+END_SRC
@@ -1641,7 +1641,7 @@ Making everything all ivy-ed up.
                       nil
                       (projectile-prepend-project-name "rg"))
     (user-error "You're not in a project")))
-  
+
   (defun counsel-projectile-rg-region-or-symbol ()
     "Use `counsel-rg' to search for the selected region or
  the symbol around point in the current project with git grep."
@@ -4680,7 +4680,7 @@ Configuration
   ;;
 
   (use-package mu4e
-    :ensure nil
+    ; :ensure nil
     :commands (mu4e mu4e-compose-new)
     :config
     (setq mu4e-maildir +email-mu4e-mail-path
@@ -5653,7 +5653,7 @@ Various data and configuration formats
   (push '("/sxhkdrc" . conf-mode) auto-mode-alist)
 
   (use-package nxml-mode
-    :ensure nil
+    ; :ensure nil
     :mode "\\.plist$")
     ;; :config
     ;; (set! :company-backend 'nxml-mode '(company-nxml company-yasnippet)))
@@ -5716,7 +5716,7 @@ The language that runs on the Emacs interpreter
 #+BEGIN_SRC emacs-lisp
 
   (use-package elisp-mode ; built-in
-    :ensure nil
+    ; :ensure nil
     :mode ("/Cask$" . emacs-lisp-mode)
     :config
     (add-hook 'emacs-lisp-mode-hook #'eldoc-mode)
