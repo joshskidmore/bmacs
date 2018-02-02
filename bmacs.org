@@ -143,6 +143,7 @@
     - [[#ocaml][OCaml]]
     - [[#perl][Perl]]
     - [[#php][Php]]
+    - [[#pkgbuild][PKGBUILD]]
     - [[#plant-uml][Plant Uml]]
     - [[#play-framework][Play Framework]]
     - [[#purescript][Purescript]]
@@ -198,7 +199,7 @@ This is Bryan Gilbert's personal Emacs configuration.
 *** Font
 
 #+BEGIN_SRC emacs-lisp
-(defvar bmacs-font (font-spec :family "SFMono" :size 23))
+(defvar bmacs-font (font-spec :family "SFMono" :size 24))
 #+END_SRC
 
 *** Leader Keys
@@ -5026,8 +5027,8 @@ Quick and awesome documentation lookup
   (add-hook 'sh-mode-hook (lambda () (setq-local counsel-dash-docsets '("Bash"))))
   (add-hook 'c-mode-hook (lambda () (setq-local counsel-dash-docsets '("C"))))
   (add-hook 'c++-mode-hook (lambda () (setq-local counsel-dash-docsets '("C++"))))
-  (add-hook 'js2-mode-hook (lambda () (setq-local counsel-dash-docsets '("JavaScript"))))
-  (add-hook 'js-mode-hook (lambda () (setq-local counsel-dash-docsets '("JavaScript"))))
+  (add-hook 'js2-mode-hook (lambda () (setq-local counsel-dash-docsets '("JavaScript" "AWS_JavaScript"))))
+  (add-hook 'js-mode-hook (lambda () (setq-local counsel-dash-docsets '("JavaScript" "AWS_JavaScript"))))
   (add-hook 'html-mode-hook (lambda () (setq-local counsel-dash-docsets '("HTML" "JavaScript"))))
   (add-hook 'python-mode-hook (lambda () (setq-local counsel-dash-docsets '("Python 3")))))
 #+END_SRC
@@ -6206,6 +6207,11 @@ The language of CEO's
   (setq ac-php-tags-path (concat bmacs-cache-dir "ac-php/")))
 #+END_SRC
 
+*** PKGBUILD
+#+BEGIN_SRC emacs-lisp
+(use-package pkgbuild-mode :mode "PKGBUILD")
+#+END_SRC
+
 *** Plant Uml
 
 
@@ -6510,44 +6516,48 @@ Ghetto shell scripting
 `sh-mode'.")
 
 (use-package sh-script ; built-in
-  :mode ("\\.zsh$"   . sh-mode)
-  :mode ("\\.zunit$" . sh-mode)
-  :mode ("/bspwmrc$" . sh-mode)
-  :init
-  (add-hook! sh-mode #'(flycheck-mode highlight-numbers-mode))
-  :config
-  ;(set! :electric 'sh-mode :words '("else" "elif" "fi" "done" "then" "do" "esac" ";;")) TODO
-  (setq sh-indent-after-continuation 'always)
+             :mode ("\\.zsh$"   . sh-mode)
+             :mode ("\\.zunit$" . sh-mode)
+             :mode ("/bspwmrc$" . sh-mode)
+             :init
+             (add-hook! sh-mode #'(flycheck-mode highlight-numbers-mode))
+             :config
+                                        ;(set! :electric 'sh-mode :words '("else" "elif" "fi" "done" "then" "do" "esac" ";;")) TODO
+             (setq sh-indent-after-continuation 'always)
 
-  ;; recognize function names with dashes in them
-  (push '((sh . ((nil "^\\s-*function\\s-+\\([[:alpha:]_-][[:alnum:]_-]*\\)\\s-*\\(?:()\\)?" 1)
-                 (nil "^\\s-*\\([[:alpha:]_-][[:alnum:]_-]*\\)\\s-*()" 1))))
-        sh-imenu-generic-expression)
+             ;; recognize function names with dashes in them
+             (push '((sh . ((nil "^\\s-*function\\s-+\\([[:alpha:]_-][[:alnum:]_-]*\\)\\s-*\\(?:()\\)?" 1)
+                            (nil "^\\s-*\\([[:alpha:]_-][[:alnum:]_-]*\\)\\s-*()" 1))))
+                   sh-imenu-generic-expression)
 
-  ;; 1. Fontifies variables in double quotes
-  ;; 2. Fontify command substitution in double quotes
-  ;; 3. Fontify built-in/common commands (see `+sh-builtin-keywords')
-  (font-lock-add-keywords
-   'sh-mode `((+sh--match-variables-in-quotes
-               (1 'font-lock-constant-face prepend)
-               (2 'font-lock-variable-name-face prepend))
-              (+sh--match-command-subst-in-quotes
-               (1 'sh-quoted-exec prepend))
-              (,(regexp-opt +sh-builtin-keywords 'words)
-               (0 'font-lock-type-face append))))
+             ;; 1. Fontifies variables in double quotes
+             ;; 2. Fontify command substitution in double quotes
+             ;; 3. Fontify built-in/common commands (see `+sh-builtin-keywords')
+             (font-lock-add-keywords
+              'sh-mode `((+sh--match-variables-in-quotes
+                          (1 'font-lock-constant-face prepend)
+                          (2 'font-lock-variable-name-face prepend))
+                         (+sh--match-command-subst-in-quotes
+                          (1 'sh-quoted-exec prepend))
+                         (,(regexp-opt +sh-builtin-keywords 'words)
+                          (0 'font-lock-type-face append))))
 
-  ;; autoclose backticks
-  (sp-local-pair 'sh-mode "`" nil :unless '(sp-point-before-word-p sp-point-before-same-p))
+             ;; autoclose backticks
+             (sp-local-pair 'sh-mode "`" nil :unless '(sp-point-before-word-p sp-point-before-same-p))
 
-  ;; sh-mode has file extensions checks for other shells, but not zsh, so...
-  (defun +sh|detect-zsh ()
-    (when (or (and buffer-file-name
-                   (string-match-p "\\.zsh\\'" buffer-file-name))
-              (save-excursion
-                (goto-char (point-min))
-                (looking-at-p "^#!.+zsh[$\\s-]")))
-      (sh-set-shell "zsh")))
-  (add-hook 'sh-mode-hook #'+sh|detect-zsh))
+             ;; two space tabs
+             (setq sh-basic-offset 2
+                   sh-indentation 2)
+
+;; sh-mode has file extensions checks for other shells, but not zsh, so...
+(defun +sh|detect-zsh ()
+  (when (or (and buffer-file-name
+                 (string-match-p "\\.zsh\\'" buffer-file-name))
+            (save-excursion
+              (goto-char (point-min))
+              (looking-at-p "^#!.+zsh[$\\s-]")))
+    (sh-set-shell "zsh")))
+(add-hook 'sh-mode-hook #'+sh|detect-zsh))
 
 
 (use-package company-shell
